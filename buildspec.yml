@@ -1,0 +1,19 @@
+version: 0.0
+
+containers:
+  main:
+    phases:
+      pre_build:
+        commands:
+          - echo 'prebuild'
+      during_build:
+        commands:
+          - echo 'Compiling the Java Code'
+          - javac -cp . HelloWorld.java
+      post_build:
+        commands:
+          - echo "Would deploy here"
+    artifacts:
+      type: zip
+      files:
+      - 'HelloWorld.class'
