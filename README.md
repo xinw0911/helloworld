@@ -15,6 +15,7 @@ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND 
 
 
 
+
 ![Legal](http://i.imgur.com/aIFJm.jpg "Legal")
 
 **Fig 1:** Oracle's legal team go after a 7-year old in the Ukraine for a HelloWorld copyright violation.
