@@ -12,6 +12,7 @@ phases:
   post_build:
     commands:
       - echo "Would deploy here"
+      - echo "666"
 artifacts:
   type: zip
   files:
