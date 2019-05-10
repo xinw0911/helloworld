@@ -13,6 +13,7 @@ phases:
     commands:
       - echo "Would deploy here"
       - echo "666"
+      - echo "666"
 artifacts:
   type: zip
   files:
