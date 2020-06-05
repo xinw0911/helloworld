@@ -5,6 +5,7 @@ phases:
   pre_build:
     commands:
       - echo 'prebuild'
+      - echo 'prebuild'
   build:
     commands:
       - echo 'Compiling the Java Code'
