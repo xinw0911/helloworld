@@ -16,6 +16,6 @@ jobs:
 #           java-version: '11'
 #           check-latest: true
       - name: post output
-        run: echo "Hello World!"
+        run: echo "Hello World!" > outputHello.txt
 #       - run: javac -cp . HelloWorld.java
-      - run: echo "Done!"
+      - run: echo "Done!" > outputDone.txt
