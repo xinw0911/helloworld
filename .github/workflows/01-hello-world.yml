@@ -18,8 +18,7 @@ jobs:
 #           distribution: 'adopt'
 #           java-version: '11'
 #           check-latest: true
-      - name: post output
-        run: |
+      - run: |
           echo "Hello World!" > outputHello.txt
           javac -cp . HelloWorld.java
 #       - run: javac -cp . HelloWorld.java
