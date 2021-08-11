@@ -23,3 +23,6 @@ jobs:
           javac -cp . HelloWorld.java
 #       - run: javac -cp . HelloWorld.java
       - run: echo "Done!" > outputDone.txt
+      - run: pwd
+      - run: cd ..
+      - run: pwd
