@@ -24,10 +24,15 @@ jobs:
       - run: env
       - name: checkout
         uses: actions/checkout@v2
+      - name: checkout
+        uses: actions/checkout@v2
+        with:
+          repository: ngujral1/maven-hello-world
 #       - name: docker
 #         uses: docker://alpine:3.8
       - name: env
         run: env
+      - run: pwd
       - name: Setup java
         uses: actions/setup-java@v2
         with:
