@@ -20,10 +20,12 @@ jobs:
 #         uses: hannut91/aws-cli@1.18.43
 #         with:
 #           args: help
+      - run: pwd
+      - run: env
       - name: checkout
         uses: actions/checkout@v2
-      - name: docker
-        uses: docker://alpine:3.8
+#       - name: docker
+#         uses: docker://alpine:3.8
       - name: env
         run: env
       - name: Setup java
