@@ -4,26 +4,28 @@ jobs:
   my-job:
     runs-on: 	ubuntu-latest
     steps:
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: Dump job context
-        env:
-          JOB_CONTEXT: ${{ toJSON(job) }}
-        run: echo "$JOB_CONTEXT"
-      - name: Dump steps context
-        env:
-          STEPS_CONTEXT: ${{ toJSON(steps) }}
-        run: echo "$STEPS_CONTEXT"
-      - name: Echo version of aws-cli
-        uses: hannut91/aws-cli@1.18.43
-        with:
-          args: help
+#       - name: Dump GitHub context
+#         env:
+#           GITHUB_CONTEXT: ${{ toJSON(github) }}
+#         run: echo "$GITHUB_CONTEXT"
+#       - name: Dump job context
+#         env:
+#           JOB_CONTEXT: ${{ toJSON(job) }}
+#         run: echo "$JOB_CONTEXT"
+#       - name: Dump steps context
+#         env:
+#           STEPS_CONTEXT: ${{ toJSON(steps) }}
+#         run: echo "$STEPS_CONTEXT"
+#       - name: Echo version of aws-cli
+#         uses: hannut91/aws-cli@1.18.43
+#         with:
+#           args: help
       - name: checkout
         uses: actions/checkout@v2
       - name: docker
         uses: docker://alpine:3.8
+      - name: env
+        run: env
       - name: Setup java
         uses: actions/setup-java@v2
         with:
