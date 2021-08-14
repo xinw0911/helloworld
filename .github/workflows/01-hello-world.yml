@@ -33,8 +33,11 @@ jobs:
       - name: env
         run: env
       - run: pwd
-      - run: ls -al
-      - run: ls -al ..
+      - run: |
+          cd ..
+          rm -rf helloworld
+          ls -al
+      - run: pwd
       - run: ls -al ../..
       - name: Setup java
         uses: actions/setup-java@v2
