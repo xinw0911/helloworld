@@ -24,10 +24,9 @@ jobs:
       - run: env
       - name: checkout
         uses: actions/checkout@v2
-      - name: checkout
-        uses: actions/checkout@v2
         with:
           repository: ngujral1/maven-hello-world
+          path: ..
 #       - name: docker
 #         uses: docker://alpine:3.8
       - name: env
@@ -35,8 +34,7 @@ jobs:
       - run: pwd
       - run: |
           cd ..
-          rm -rf helloworld
-          ls -al
+          ls
       - run: pwd
       - run: ls -al ../..
       - name: Setup java
