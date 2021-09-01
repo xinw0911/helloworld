@@ -21,7 +21,7 @@ jobs:
 #         with:
 #           args: help
       - run: env
-      - run: echo "$system.planId"
+      - run: echo $system
 
 
 #       - run: ls -al ../..
