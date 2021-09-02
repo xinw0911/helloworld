@@ -2,7 +2,7 @@ name: hello-world
 on: workflow_dispatch
 jobs:
   my-job:
-    runs-on: 	ubuntu-latest
+    runs-on: 	self-hosted
     steps:
 #       - name: Dump GitHub context
 #         env:
@@ -19,10 +19,8 @@ jobs:
 #       - name: Echo version of aws-cli
 #         uses: hannut91/aws-cli@1.18.43
 #         with:
-#           args: help
+#           args: --version
       - run: env
-      - run: echo "$system"
-
 
 #       - run: ls -al ../..
 #       - name: Setup java
