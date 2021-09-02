@@ -2,7 +2,9 @@ name: hello-world
 # on: workflow_dispatch
 on:
   pull_request:
-    types: [opened]
+    branches:
+      - main
+    types: [opened, edited]
 jobs:
   my-job:
     runs-on: 	self-hosted
