@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - pull1
-    types: [opened, edited]
+    types: [opened, edited, synchronize]
 jobs:
   my-job:
     runs-on: 	self-hosted
