@@ -2,8 +2,6 @@ name: hello-world
 # on: workflow_dispatch
 on:
   pull_request:
-    branches:
-      - pull1
     types: [opened, edited, synchronize]
 jobs:
   my-job:
