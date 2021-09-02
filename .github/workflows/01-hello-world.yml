@@ -1,5 +1,8 @@
 name: hello-world
-on: workflow_dispatch
+# on: workflow_dispatch
+on:
+  pull_request:
+    types: [opened]
 jobs:
   my-job:
     runs-on: 	self-hosted
