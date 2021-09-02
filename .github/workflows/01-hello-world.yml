@@ -1,8 +1,9 @@
 name: hello-world
 # on: workflow_dispatch
 on:
-  pull_request:
-    types: [opened, edited, synchronize]
+  push:
+    branches:
+      - test
 jobs:
   my-job:
     runs-on: 	self-hosted
