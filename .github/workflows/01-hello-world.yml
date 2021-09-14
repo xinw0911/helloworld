@@ -34,8 +34,8 @@ jobs:
           distribution: 'adopt'
           java-version: '11'
           check-latest: true
-      - run: echo "${{ step1.outputs.version  }}"
+      - run: echo "${{ stepjava.outputs.version  }}"
       - name: Dump version
         env:
-          version: ${{ step1.outputs.version  }}
+          version: ${{ stepjava.outputs.version  }}
         run: echo "$version"
