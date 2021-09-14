@@ -27,17 +27,15 @@ jobs:
       - run: env
 
 #       - run: ls -al ../..
-#       - name: Setup java
-#         uses: actions/setup-java@v2
-#         with:
-#           distribution: 'adopt'
-#           java-version: '11'
-#           check-latest: true
-#       - run: |
-#           echo "Hello World!" > outputHello.txt
-#           javac -cp . HelloWorld.java
-#       - run: javac -cp . HelloWorld.java
-#       - run: echo "Done!" > outputDone.txt
-      - run: pwd
-      - run: cd ..
-      - run: pwd
+      - name: Setup java
+        id: stepjava
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '11'
+          check-latest: true
+      - run: echo "${{ step1.outputs.version  }}"
+      - name: Dump version
+        env:
+          version: ${{ step1.outputs.version  }}
+        run: echo "$version"
