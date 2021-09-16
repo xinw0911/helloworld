@@ -28,8 +28,10 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: '11'
+          java-version: ${ version }
           check-latest: true
+        env:
+          version: '11'
       - run: echo "${{ steps.stepjava.outputs.version  }}"
       - name: Dump version
         env:
