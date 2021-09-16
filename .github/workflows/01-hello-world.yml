@@ -31,7 +31,7 @@ jobs:
           java-version: ${{ env.version }}
           check-latest: true
         env:
-          version: '8'
+          version: '11'
       - run: echo "${{ steps.stepjava.outputs.version  }}"
       - name: Dump version
         env:
