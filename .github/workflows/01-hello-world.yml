@@ -28,7 +28,7 @@ jobs:
         uses: actions/setup-java@v2
         with:
           distribution: 'adopt'
-          java-version: ${ version }
+          java-version: ${{ version }}
           check-latest: true
         env:
           version: '8'
