@@ -41,8 +41,9 @@ jobs:
         env:
           STEPS_CONTEXT: ${{ toJSON(steps) }}
         run: echo "$STEPS_CONTEXT"
-      - uses: actions/hello-world-javascript-action@v1.1
+      - uses: xinw0911/hello-world@v1.1
         with:
           who-to-greet: ${{ env.who }}
         env:
           who: 'xwana'
+      - run: ls
