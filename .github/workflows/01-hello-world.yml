@@ -48,4 +48,9 @@ jobs:
           who-to-greet: ${{ env.who }}
         env:
           who: 'xwana'
+      
+      - uses: chrisdibble/aws-cloudformation-github-deploy@c540da5d51d300dd62b026c25176796cd4d455be
+        with:
+          name: EC2ContainerService-xwanatest
+          template: cfntemp.yaml
       - run: ls
