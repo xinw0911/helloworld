@@ -38,6 +38,7 @@ jobs:
           version: ${{ steps.stepjava.outputs.version  }}
         run: echo "$version"
       - uses: xinw0911/hello-world@4423a356715630def9b8dc3967c00947086eeeff
+        id: hello
         with:
           who-to-greet: ${{ env.who }}
         env:
