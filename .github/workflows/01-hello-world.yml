@@ -23,8 +23,6 @@ jobs:
 #         with:
 #           args: --version
       - run: env
-
-#       - run: ls -al ../..
       - name: Setup java
         id: stepjava
         uses: actions/setup-java@v2
@@ -39,13 +37,13 @@ jobs:
         env:
           version: ${{ steps.stepjava.outputs.version  }}
         run: echo "$version"
-      - name: Dump steps context
-        env:
-          STEPS_CONTEXT: ${{ toJSON(steps) }}
-        run: echo "$STEPS_CONTEXT"
-      - uses: xinw0911/hello-world@v1.1
+      - uses: xinw0911/hello-world@4423a356715630def9b8dc3967c00947086eeeff
         with:
           who-to-greet: ${{ env.who }}
         env:
           who: ${{ env.version8 }}
+      - name: Dump steps context
+        env:
+          STEPS_CONTEXT: ${{ toJSON(steps) }}
+        run: echo "$STEPS_CONTEXT"
       - run: ls
