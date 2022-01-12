@@ -15,6 +15,9 @@ jobs:
       - run: pwd
       - run: ls
       - run: docker build .
+      - uses: docker://docker:latest
+        with:
+          args:  --privileged 
 #       - name: Dump GitHub context
 #         env:
 #           GITHUB_CONTEXT: ${{ toJSON(github) }}
