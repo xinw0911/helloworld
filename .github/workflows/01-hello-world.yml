@@ -10,6 +10,8 @@ jobs:
     env:
       version8: '8'
     steps:
+      - name: Checkout
+        uses: actions/checkout@v2
       - run: pwd
       - run: ls
       - run: docker build .
