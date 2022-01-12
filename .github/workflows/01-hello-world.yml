@@ -10,6 +10,8 @@ jobs:
     env:
       version8: '8'
     steps:
+      - run: pwd
+      - run: ls
       - run: docker build .
 #       - name: Dump GitHub context
 #         env:
