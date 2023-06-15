@@ -21,14 +21,14 @@ jobs:
       - uses: docker://docker:latest
         with:
           args:  --privileged 
-#       - name: Dump GitHub context
-#         env:
-#           GITHUB_CONTEXT: ${{ toJSON(github) }}
-#         run: echo "$GITHUB_CONTEXT"
-#       - name: Dump job context
-#         env:
-#           JOB_CONTEXT: ${{ toJSON(job) }}
-#         run: echo "$JOB_CONTEXT"
+      - name: Dump GitHub context
+        env:
+          GITHUB_CONTEXT: ${{ toJSON(github) }}
+        run: echo "$GITHUB_CONTEXT"
+      - name: Dump job context
+        env:
+          JOB_CONTEXT: ${{ toJSON(job) }}
+        run: echo "$JOB_CONTEXT"
 #       - name: Echo version of aws-cli
 #         uses: hannut91/aws-cli@1.18.43
 #         with:
