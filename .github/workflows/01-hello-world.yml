@@ -44,6 +44,7 @@ jobs:
 #           who: ${{ env.version8 }}
       - run: cat 33
         continue-on-error: true
+        id: cat33
       - name: Dump steps context
         env:
           STEPS_CONTEXT: ${{ toJSON(steps) }}
