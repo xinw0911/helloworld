@@ -6,6 +6,15 @@ on: workflow_dispatch
 #       - test
 jobs:
   my-job:
+      runs-on: 	ubuntu-latest
+      env:
+        version8: '8'
+      steps:
+        - name: Checkout
+          uses: actions/checkout@v2
+        - run: pwd
+        - run: ls
+  my-job2:
     runs-on: 	ubuntu-latest
     env:
       version8: '8'
