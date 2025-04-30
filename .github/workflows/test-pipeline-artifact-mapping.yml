@@ -48,6 +48,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: my-artifact
-          path: HellowWorld.class
+          path: HelloWorld.class
           retention-days: 5
-      - run: aws s3 cp HellowWorld.class s3://xwana-iad-test-bucket/HellowWorld.class
+      - run: aws s3 cp HelloWorld.class s3://xwana-iad-test-bucket/HelloWorld.class
