@@ -43,16 +43,11 @@ jobs:
                docker push 834197531540.dkr.ecr.us-east-1.amazonaws.com/testmapping:latest   
       - name: compile
         run: javac HelloWorld.java
-      - name: Dump steps context
-        env:
-          STEPS_CONTEXT: ${{ toJSON(steps) }}
-        run: echo "$STEPS_CONTEXT"
-      - name: Dump GitHub context
-        env:
-          GITHUB_CONTEXT: ${{ toJSON(github) }}
-        run: echo "$GITHUB_CONTEXT"
-      - name: Dump job context
-        env:
-          JOB_CONTEXT: ${{ toJSON(job) }}
-        run: echo "$JOB_CONTEXT"
       - run: ls
+      - name: 'Upload Artifact'
+        uses: actions/upload-artifact@v4
+        with:
+          name: my-artifact
+          path: HellowWorld.class
+          retention-days: 5
+      - run: aws s3 cp HellowWorld.class s3://xwana-iad-test-bucket/HellowWorld.class
