@@ -1,4 +1,4 @@
-name: hello-world
+name: test-pipeline-artifact-mapping
 
 on: 
   workflow_dispatch:
