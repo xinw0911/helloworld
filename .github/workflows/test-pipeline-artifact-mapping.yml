@@ -50,4 +50,4 @@ jobs:
           name: my-artifact
           path: HelloWorld.class
           retention-days: 5
-      - run: aws s3 cp HelloWorld.class s3://xwana-iad-test-bucket/HelloWorld.class
+      - run: aws s3 cp HelloWorld.class s3://xwanaiadtestbucket/HelloWorld.class
