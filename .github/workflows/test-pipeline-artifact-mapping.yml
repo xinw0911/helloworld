@@ -12,6 +12,7 @@ permissions:
 jobs:
   my-job:
     runs-on: 	ubuntu-latest
+    environment: beta
     env:
       version8: '8'
     steps:
@@ -34,7 +35,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::834197531540:role/test-deployServiceRoleBA1AC55C-as2CD4zNVdgC
+          role-to-assume: arn:aws:iam::${{ env.ACCOUNT }}:role/test-deployServiceRoleBA1AC55C-as2CD4zNVdgC
           aws-region: us-east-1
       - run: |
                aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 834197531540.dkr.ecr.us-east-1.amazonaws.com
