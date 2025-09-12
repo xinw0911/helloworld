@@ -32,16 +32,16 @@ jobs:
           check-latest: true
         env:
           version: '11'
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::${{ vars.ACCOUNT }}:role/test-deployServiceRoleBA1AC55C-as2CD4zNVdgC
-          aws-region: us-east-1
-      - run: |
-               aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com
-               docker build -t testmapping .
-               docker tag testmapping:latest ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com/testmapping:latest
-               docker push ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com/testmapping:latest   
+      # - name: Configure AWS Credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     role-to-assume: arn:aws:iam::${{ vars.ACCOUNT }}:role/test-deployServiceRoleBA1AC55C-as2CD4zNVdgC
+      #     aws-region: us-east-1
+      # - run: |
+      #          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com
+      #          docker build -t testmapping .
+      #          docker tag testmapping:latest ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com/testmapping:latest
+      #          docker push ${{ vars.ACCOUNT }}.dkr.ecr.us-east-1.amazonaws.com/testmapping:latest   
       - name: compile
         run: javac HelloWorld.java
       - run: ls
@@ -51,6 +51,6 @@ jobs:
           name: my-artifact
           path: HelloWorld.class
           retention-days: 5
-      - run: aws s3 cp HelloWorld.class s3://xwanaiadtestbucket/HelloWorld.class
-      - run: aws s3 cp HelloWorld.class s3://xwana-iad-test-bucket/HelloWorld.class
-      - run: aws s3api put-object --bucket xwanaiadtestbucket --key HelloWorld.class --body HelloWorld.class
+      # - run: aws s3 cp HelloWorld.class s3://xwanaiadtestbucket/HelloWorld.class
+      # - run: aws s3 cp HelloWorld.class s3://xwana-iad-test-bucket/HelloWorld.class
+      # - run: aws s3api put-object --bucket xwanaiadtestbucket --key HelloWorld.class --body HelloWorld.class
