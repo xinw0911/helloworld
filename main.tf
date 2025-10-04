@@ -47,7 +47,7 @@ resource "aws_dynamodb_table" "test_2_table" {
   name           = "test3newtable"
   billing_mode   = "PROVISIONED"
   read_capacity  = 3
-  write_capacity = 4
+  write_capacity = 5
   hash_key       = "id"
 
   point_in_time_recovery {
