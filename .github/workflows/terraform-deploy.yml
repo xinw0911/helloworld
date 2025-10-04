@@ -13,7 +13,7 @@ env: # hard-code resource names
   # TFSTATE_REGION: us-west1
   AWS_REGION: us-west-2
   TFSTATE_KEY: application-signals/demo-applications
-  TFSTATE_BUCKET: tfstate-csdelivery-tool-test-bucket # prerequisite: manually create a bucket using  "aws s3 mb s3://tfstate-$(uuidgen | tr A-Z a-z)" and paste bucket name here.
+  TFSTATE_BUCKET: tfstate-csdelivery-test-bucket # prerequisite: manually create a bucket using  "aws s3 mb s3://tfstate-$(uuidgen | tr A-Z a-z)" and paste bucket name here.
   TFSTATE_REGION: us-west-2
 
 permissions:
@@ -36,7 +36,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          role-to-assume: arn:aws:iam::351611232962:role/githubrole
+          role-to-assume: arn:aws:iam::085494094526:role/githubrole
           aws-region: ${{ env.AWS_REGION }}
 
       # - uses: 'google-github-actions/auth@v2'
