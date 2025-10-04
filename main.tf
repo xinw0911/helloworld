@@ -37,7 +37,7 @@ resource "aws_sqs_queue" "apm_test_queue_" {
   delay_seconds             = 100
   max_message_size          = 2048
   message_retention_seconds = 86400
-  receive_wait_time_seconds = 19
+  receive_wait_time_seconds = 20
 }
 
 resource "aws_dynamodb_table" "test_2_table" {
@@ -47,7 +47,7 @@ resource "aws_dynamodb_table" "test_2_table" {
   name           = "test3newtable"
   billing_mode   = "PROVISIONED"
   read_capacity  = 3
-  write_capacity = 4
+  write_capacity = 3
   hash_key       = "id"
 
   point_in_time_recovery {
