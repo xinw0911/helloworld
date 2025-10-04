@@ -3,7 +3,7 @@ name: Terraform Deploy
 on:
   push:
     branches:
-      - main  # Adjust this to your main branch name if different
+      - test  # Adjust this to your main branch name if different
   workflow_dispatch:  # Allow manual triggering
 
 env: # hard-code resource names
