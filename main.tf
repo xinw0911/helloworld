@@ -29,7 +29,12 @@ terraform {
   #   region = "us-east-1"
   # }
 }
-
+resource "aws_kinesis_stream" "apm_test_stream" {
+  #checkov:skip=CKV_AWS_43:demo only, not encryption is needed
+  #checkov:skip=CKV_AWS_185:demo only, not encryption is needed
+  name             = "apm_test2"
+  shard_count      = 2
+}
 
 resource "aws_sqs_queue" "apm_test_queue_" {
   #checkov:skip=CKV_AWS_27:demo only, not encryption is needed
@@ -63,4 +68,40 @@ resource "aws_dynamodb_table" "test_2_table" {
     type = "S"
   }
 
+}
+
+module "iam_role_inline_policy" {
+  source = "terraform-aws-modules/iam/aws//modules/iam-role"
+
+  name = "test-role-module-inline-policy"
+
+  create_instance_profile = true
+
+  trust_policy_permissions = {
+    ec2 = {
+      effect = "Allow"
+      actions = [
+        "sts:AssumeRole"
+      ]
+      principals = [{
+        type        = "Service"
+        identifiers = ["ec2.amazonaws.com"]
+      }]
+    }
+  }
+
+  create_inline_policy = true
+  inline_policy_permissions = {
+    S3ReadAccess = {
+      effect = "Allow"
+      actions = [
+        "s3:GetObject",
+        "s3:ListBucket"
+      ]
+      resources = [
+        "arn:aws:s3:::example-bucket",
+        "arn:aws:s3:::example-bucket/*"
+      ]
+    }
+  }
 }
