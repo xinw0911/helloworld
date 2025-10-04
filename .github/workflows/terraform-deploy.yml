@@ -1,0 +1,59 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches:
+      - main  # Adjust this to your main branch name if different
+  workflow_dispatch:  # Allow manual triggering
+
+env: # hard-code resource names
+  # REGION: us-west1
+  # TFSTATE_KEY: terraform/state
+  # TFSTATE_BUCKET:  xw-tool-test-terraform-state-bucket  # prerequisite: manually create a bucket using  "aws s3 mb s3://tfstate-$(uuidgen | tr A-Z a-z)" and paste bucket name here.
+  # TFSTATE_REGION: us-west1
+  AWS_REGION: us-west-2
+  TFSTATE_KEY: application-signals/demo-applications
+  TFSTATE_BUCKET: tfstate-csdelivery-tool-test-bucket # prerequisite: manually create a bucket using  "aws s3 mb s3://tfstate-$(uuidgen | tr A-Z a-z)" and paste bucket name here.
+  TFSTATE_REGION: us-west-2
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 5
+          
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: arn:aws:iam::351611232962:role/githubrole
+          aws-region: ${{ env.AWS_REGION }}
+
+      # - uses: 'google-github-actions/auth@v2'
+      #   with:
+      #     project_id: 'xinwang-463801'
+      #     workload_identity_provider: 'projects/1023953923730/locations/global/workloadIdentityPools/github-pool/providers/github'
+      #     service_account: 'github@xinwang-463801.iam.gserviceaccount.com'
+      - name: Set up terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_wrapper: false
+
+      - name: Terraform Init
+        run: |
+         terraform init -backend-config="bucket=${{ env.TFSTATE_BUCKET }}" \
+                        -backend-config="key=${{ env.TFSTATE_KEY }}" \
+                        -backend-config="region=${{ env.TFSTATE_REGION }}"
+
+      - name: Terraform Apply
+        run: terraform apply --auto-approve
