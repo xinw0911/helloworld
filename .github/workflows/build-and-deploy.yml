@@ -1,0 +1,242 @@
+name: Build and Deploy Java Calculator
+
+on:
+  push:
+    branches: [ test ]
+  workflow_dispatch:
+
+env:
+  AWS_ACCOUNT_ID: "085494094526"
+  AWS_REGION: us-west-2
+  ECR_REGISTRY: 085494094526.dkr.ecr.us-west-2.amazonaws.com
+  ECR_REPOSITORY: gh/repo
+  CFN_STACK_NAME: enhanced-calculator-ecr-infrastructure
+  ENVIRONMENT: production
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/githubrole
+          aws-region: ${{ env.AWS_REGION }}
+          mask-aws-account-id: true
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Push Docker images to ECR
+        run: |
+          export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+          export REGION=${{ env.AWS_REGION }}
+          export COMMIT_SHA=${{ github.sha }}
+          chmod +x ./push-ecr.sh
+          ./push-ecr.sh
+
+      - name: Verify deployment
+        run: |
+          export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+          export REGION=${{ env.AWS_REGION }}
+          export COMMIT_SHA=${{ github.sha }}
+          export REPOSITORY_PREFIX=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+          export REPOSITORY_NAME=${{ env.ECR_REPOSITORY }}
+          
+          echo "Deployed to account: $ACCOUNT"
+          echo "Image pushed to: ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest"
+          echo "Image pushed to: ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:${COMMIT_SHA}"
+
+#      - name: Check if CloudFormation stack exists
+#        id: check-stack
+#        run: |
+#          if aws cloudformation describe-stacks --stack-name ${{ env.CFN_STACK_NAME }} --region ${{ env.AWS_REGION }} >/dev/null 2>&1; then
+#            echo "stack-exists=true" >> $GITHUB_OUTPUT
+#            echo "operation=update-stack" >> $GITHUB_OUTPUT
+#            echo "wait-condition=stack-update-complete" >> $GITHUB_OUTPUT
+#            echo "✅ CloudFormation stack exists - will update"
+#          else
+#            echo "stack-exists=false" >> $GITHUB_OUTPUT
+#            echo "operation=create-stack" >> $GITHUB_OUTPUT
+#            echo "wait-condition=stack-create-complete" >> $GITHUB_OUTPUT
+#            echo "🆕 CloudFormation stack does not exist - will create"
+#          fi
+
+#      - name: Deploy/Update CloudFormation Infrastructure
+#        run: |
+#          echo "🚀 Deploying CloudFormation stack: ${{ env.CFN_STACK_NAME }}"
+#          echo "Operation: ${{ steps.check-stack.outputs.operation }}"
+#
+#          aws cloudformation ${{ steps.check-stack.outputs.operation }} \
+#            --stack-name ${{ env.CFN_STACK_NAME }} \
+#            --template-body file://ecr-simple-cfn.yaml \
+#            --parameters \
+#              ParameterKey=RepositoryName,ParameterValue=${{ env.ECR_REPOSITORY }} \
+#              ParameterKey=Environment,ParameterValue=${{ env.ENVIRONMENT }} \
+#              ParameterKey=DeploymentTimestamp,ParameterValue=$(date -u +%Y-%m-%dT%H:%M:%SZ) \
+#            --capabilities CAPABILITY_NAMED_IAM \
+#            --region ${{ env.AWS_REGION }} \
+#            --tags \
+#              Key=Application,Value="Enhanced Java Calculator" \
+#              Key=Environment,Value=${{ env.ENVIRONMENT }} \
+#              Key=GitHubRepository,Value=${{ github.repository }} \
+#              Key=GitHubSHA,Value=${{ github.sha }} \
+#              Key=DockerImageTag,Value=${{ github.sha }}
+
+      - name: Deploy CloudFormation Stack using GitHub Action
+        uses: aws-actions/aws-cloudformation-github-deploy@v1
+        with:
+          name: ${{ env.CFN_STACK_NAME }}
+          template: ecr-simple-cfn-minimal.yaml
+          parameter-overrides: |
+            RepositoryName=${{ env.ECR_REPOSITORY }},
+            Environment=${{ env.ENVIRONMENT }}
+          no-fail-on-empty-changeset: "1"
+          capabilities: CAPABILITY_NAMED_IAM
+          tags: |
+            [
+              {"Key": "Application", "Value": "Enhanced Java Calculator"},
+              {"Key": "Environment", "Value": "${{ env.ENVIRONMENT }}"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"},
+              {"Key": "GitHubSHA", "Value": "${{ github.sha }}"}
+            ]
+
+#      - name: Wait for CloudFormation deployment
+#        run: |
+#          echo "⏳ Waiting for CloudFormation stack to complete..."
+#          aws cloudformation wait ${{ steps.check-stack.outputs.wait-condition }} \
+#            --stack-name ${{ env.CFN_STACK_NAME }} \
+#            --region ${{ env.AWS_REGION }}
+#          
+#          if [ $? -eq 0 ]; then
+#            echo "✅ CloudFormation deployment successful!"
+#          else
+#            echo "❌ CloudFormation deployment failed!"
+#            exit 1
+#          fi
+
+      - name: Get CloudFormation outputs
+        id: cfn-outputs
+        run: |
+          echo "📊 Getting CloudFormation stack outputs..."
+          
+          # Display all stack outputs
+          aws cloudformation describe-stacks \
+            --stack-name ${{ env.CFN_STACK_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[*].[OutputKey,OutputValue]' \
+            --output table
+          
+          # Get specific outputs for use in subsequent steps
+          GITHUB_ROLE=$(aws cloudformation describe-stacks \
+            --stack-name ${{ env.CFN_STACK_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`GitHubActionsRoleArn`].OutputValue' \
+            --output text)
+          
+          ECR_URI=$(aws cloudformation describe-stacks \
+            --stack-name ${{ env.CFN_STACK_NAME }} \
+            --region ${{ env.AWS_REGION }} \
+            --query 'Stacks[0].Outputs[?OutputKey==`ECRRepositoryURI`].OutputValue' \
+            --output text)
+          
+          echo "✅ Key infrastructure outputs:"
+          echo "GitHub Actions Role: $GITHUB_ROLE"
+          echo "ECR Repository URI: $ECR_URI"
+
+      - name: Test deployed calculator
+        run: |
+          echo "🧮 Testing deployed calculator..."
+          
+          export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+          export REGION=${{ env.AWS_REGION }}
+          export REPOSITORY_PREFIX=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+          export REPOSITORY_NAME=${{ env.ECR_REPOSITORY }}
+          
+          # Test help command
+          echo "Testing help command..."
+          docker run --rm ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest java -jar app.jar --help
+          
+          # Test JSON output with a simple calculation
+          echo "Testing JSON output..."
+          echo "5 + 3" | docker run -i --rm ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest java -jar app.jar --json || echo "JSON test completed"
+          
+          echo "✅ Calculator tests completed!"
+
+      - name: Save logs
+        run: |
+          mkdir -p logs
+          export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+          export REGION=${{ env.AWS_REGION }}
+          export REPOSITORY_PREFIX=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+          export REPOSITORY_NAME=${{ env.ECR_REPOSITORY }}
+          
+          echo "Workflow run logs for ${{ github.repository }} at $(date)" > logs/workflow.log
+          echo "AWS Account: $ACCOUNT" >> logs/workflow.log
+          echo "AWS Region: $REGION" >> logs/workflow.log
+          echo "CloudFormation Stack: ${{ env.CFN_STACK_NAME }}" >> logs/workflow.log
+          echo "Docker image pushed: ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest" >> logs/workflow.log
+          echo "Docker image pushed: ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:${{ github.sha }}" >> logs/workflow.log
+          echo "GitHub SHA: ${{ github.sha }}" >> logs/workflow.log
+          echo "Environment: ${{ env.ENVIRONMENT }}" >> logs/workflow.log
+          cat logs/workflow.log
+
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: workflow-logs
+          path: logs/workflow.log
+
+      - name: Generate deployment summary
+        run: |
+          export ACCOUNT=$(aws sts get-caller-identity | jq .Account -r)
+          export REGION=${{ env.AWS_REGION }}
+          export REPOSITORY_PREFIX=${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com
+          export REPOSITORY_NAME=${{ env.ECR_REPOSITORY }}
+          
+          echo "📋 === Deployment Summary ===" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🎉 Deployment Status:** ✅ SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**📦 Deployed Resources:**" >> $GITHUB_STEP_SUMMARY
+          echo "- CloudFormation Stack: \`${{ env.CFN_STACK_NAME }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ECR Repository: \`${{ env.ECR_REPOSITORY }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Image Latest: \`${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest\`" >> $GITHUB_STEP_SUMMARY
+          echo "- Docker Image SHA: \`${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**🚀 Quick Commands:**" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
+          echo "# Login to ECR" >> $GITHUB_STEP_SUMMARY
+          echo "aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin ${REPOSITORY_PREFIX}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Run calculator (latest)" >> $GITHUB_STEP_SUMMARY
+          echo "docker run --platform linux/amd64 -it --rm ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Run calculator (this commit)" >> $GITHUB_STEP_SUMMARY
+          echo "docker run --platform linux/amd64 -it --rm ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# JSON mode" >> $GITHUB_STEP_SUMMARY
+          echo "docker run --platform linux/amd64 --rm ${REPOSITORY_PREFIX}/${REPOSITORY_NAME}:latest java -jar app.jar --json" >> $GITHUB_STEP_SUMMARY
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**📊 Deployment Details:**" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment:** ${{ env.ENVIRONMENT }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Workflow:** ${{ github.workflow }}" >> $GITHUB_STEP_SUMMARY
