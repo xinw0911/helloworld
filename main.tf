@@ -37,7 +37,7 @@ resource "aws_sqs_queue" "apm_test_queue_" {
   delay_seconds             = 100
   max_message_size          = 2048
   message_retention_seconds = 86400
-  receive_wait_time_seconds = 20
+  receive_wait_time_seconds = 19
 }
 
 resource "aws_dynamodb_table" "test_2_table" {
