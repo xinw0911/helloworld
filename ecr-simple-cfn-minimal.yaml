@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Minimal CloudFormation template for Enhanced Java Calculator'
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: 'gh/repo'
+    Description: 'Name of the ECR repository'
+    
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Environment name'
+
+Resources:
+  # IAM Role for GitHub Actions CI/CD - Essential for GitHub Actions to push to ECR
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-github-actions-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+              StringLike:
+                'token.actions.githubusercontent.com:sub': 'repo:*:*'
+      Policies:
+        - PolicyName: ECRFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:*'
+                Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${RepositoryName}'
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:Describe*'
+                Resource: '*'
+      Tags:
+        - Key: 'Application'
+          Value: 'Enhanced Java Calculator'
+        - Key: 'Environment'
+          Value: !Ref Environment
+
+  # SSM Parameter for ECR Repository URI - Useful for referencing the ECR repository
+  ECRRepositoryURIParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${AWS::StackName}/ecr/repository-uri'
+      Type: String
+      Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}'
+      Description: 'ECR Repository URI for Enhanced Java Calculator'
+      Tags:
+        Application: 'Enhanced Java Calculator'
+        Environment: !Ref Environment
+
+Outputs:
+  ECRRepositoryURI:
+    Description: 'URI of the existing ECR repository'
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ECRRepositoryURI'
+
+  GitHubActionsRoleArn:
+    Description: 'ARN of the GitHub Actions IAM role'
+    Value: !GetAtt GitHubActionsRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GitHubActionsRoleArn'
+
+  DockerLoginCommand:
+    Description: 'Command to login to ECR'
+    Value: !Sub 'aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com'
+
+  DockerRunCommand:
+    Description: 'Command to run calculator from ECR'
+    Value: !Sub 'docker run --platform linux/amd64 -it --rm ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}:latest'

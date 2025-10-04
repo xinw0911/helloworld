@@ -1,0 +1,251 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'Simple CloudFormation template based on existing ECR repository for Enhanced Java Calculator'
+
+Parameters:
+  RepositoryName:
+    Type: String
+    Default: 'gh/repo'
+    Description: 'Name of the ECR repository'
+    
+  Environment:
+    Type: String
+    Default: 'production'
+    AllowedValues: ['development', 'staging', 'production']
+    Description: 'Environment name'
+    
+  # Removed DeploymentTimestamp parameter to prevent unnecessary stack updates
+
+Resources:
+  # IAM Role for GitHub Actions CI/CD
+  GitHubActionsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-github-actions-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Sub 'arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com'
+            Action: 'sts:AssumeRoleWithWebIdentity'
+            Condition:
+              StringEquals:
+                'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com'
+              StringLike:
+                'token.actions.githubusercontent.com:sub': 'repo:*:*'
+      Policies:
+        - PolicyName: ECRFullAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:*'
+                Resource: !Sub 'arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/${RepositoryName}'
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+        - PolicyName: CloudFormationTaggingPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'iam:TagRole'
+                  - 'iam:UntagRole'
+                  - 'iam:ListRoleTags'
+                Resource: 
+                  - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AWS::StackName}-*'
+              - Effect: Allow
+                Action:
+                  - 'ssm:GetParameter'
+                  - 'ssm:GetParameters'
+                  - 'ssm:PutParameter'
+                  - 'ssm:AddTagsToResource'
+                  - 'ssm:RemoveTagsFromResource'
+                  - 'ssm:ListTagsForResource'
+                Resource: 
+                  - !Sub 'arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${AWS::StackName}/*'
+              - Effect: Allow
+                Action:
+                  - 'logs:TagLogGroup'
+                  - 'logs:UntagLogGroup'
+                  - 'logs:ListTagsForResource'
+                  - 'logs:ListTagsLogGroup'
+                Resource: 
+                  - !Sub 'arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/calculator/${AWS::StackName}*'
+              - Effect: Allow
+                Action:
+                  - 'cloudformation:*'
+                Resource: 
+                  - !Sub 'arn:aws:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${AWS::StackName}/*'
+      Tags:
+        - Key: 'Application'
+          Value: 'Enhanced Java Calculator'
+        - Key: 'Environment'
+          Value: !Ref Environment
+
+  # IAM Role for ECS/Fargate execution
+  ECSExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub '${AWS::StackName}-ecs-execution-role'
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+      Policies:
+        - PolicyName: ECRAccessPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: '*'
+
+  # CloudWatch Log Group for application logs
+  CalculatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/calculator/${AWS::StackName}'
+      RetentionInDays: 30
+      Tags:
+        - Key: 'Application'
+          Value: 'Enhanced Java Calculator'
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'ManagedBy'
+          Value: 'CloudFormation'
+        - Key: 'Owner'
+          Value: 'DevOps'
+
+  # SSM Parameter for ECR Repository URI (static - won't change each deployment)
+  ECRRepositoryURIParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${AWS::StackName}/ecr/repository-uri'
+      Type: String
+      Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}'
+      Description: 'ECR Repository URI for Enhanced Java Calculator'
+      Tags:
+        Application: 'Enhanced Java Calculator'
+        Environment: !Ref Environment
+
+  # SSM Parameter for deployment tracking (modified to use static value)
+  DeploymentTrackingParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${AWS::StackName}/deployment/last-deployment'
+      Type: String
+      Value: 'static-value-to-prevent-unnecessary-updates'
+      Description: 'Deployment tracking parameter - only updated when template changes'
+      Tags:
+        Application: 'Enhanced Java Calculator'
+        Environment: !Ref Environment
+        Purpose: 'Deployment Tracking'
+
+  # SSM Parameter for Docker Run Command
+  DockerRunCommandParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${AWS::StackName}/docker/run-command'
+      Type: String
+      Value: !Sub |
+        aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+        docker run --platform linux/amd64 -it --rm ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}:latest
+      Description: 'Docker run command for Enhanced Java Calculator'
+      Tags:
+        Application: 'Enhanced Java Calculator'
+        Environment: !Ref Environment
+        
+  # SSM Parameter for Calculator Configuration
+  CalculatorConfigParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub '/${AWS::StackName}/app/config'
+      Type: String
+      Value: !Sub |
+        {
+          "defaultPrecision": 4,
+          "enableJsonOutput": false,
+          "logLevel": "INFO",
+          "maxHistorySize": 100,
+          "enableAdvancedOperations": true
+        }
+      Description: 'Configuration parameters for Enhanced Java Calculator'
+      Tags:
+        Application: 'Enhanced Java Calculator'
+        Environment: !Ref Environment
+        Component: 'Configuration'
+
+Outputs:
+  ECRRepositoryURI:
+    Description: 'URI of the existing ECR repository'
+    Value: !Sub '${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}'
+    Export:
+      Name: !Sub '${AWS::StackName}-ECRRepositoryURI'
+
+  GitHubActionsRoleArn:
+    Description: 'ARN of the GitHub Actions IAM role'
+    Value: !GetAtt GitHubActionsRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-GitHubActionsRoleArn'
+
+  ECSExecutionRoleArn:
+    Description: 'ARN of the ECS execution role'
+    Value: !GetAtt ECSExecutionRole.Arn
+    Export:
+      Name: !Sub '${AWS::StackName}-ECSExecutionRoleArn'
+
+  LogGroupName:
+    Description: 'CloudWatch Log Group name'
+    Value: !Ref CalculatorLogGroup
+    Export:
+      Name: !Sub '${AWS::StackName}-LogGroupName'
+
+  DockerLoginCommand:
+    Description: 'Command to login to ECR'
+    Value: !Sub 'aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com'
+
+  DockerRunCommand:
+    Description: 'Command to run calculator from ECR'
+    Value: !Sub 'docker run --platform linux/amd64 -it --rm ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}:latest'
+
+  RepositoryInfo:
+    Description: 'ECR Repository information'
+    Value: !Sub |
+      Repository: ${RepositoryName}
+      Account: ${AWS::AccountId}
+      Region: ${AWS::Region}
+      Full URI: ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}
+
+  # DeploymentTimestamp output removed to prevent unnecessary stack updates
+
+  DeploymentTrackingParameter:
+    Description: 'SSM Parameter for deployment tracking'
+    Value: !Ref DeploymentTrackingParameter
+    Export:
+      Name: !Sub '${AWS::StackName}-DeploymentTrackingParameter'
+      
+  CalculatorConfigParameter:
+    Description: 'SSM Parameter for calculator configuration'
+    Value: !Ref CalculatorConfigParameter
+    Export:
+      Name: !Sub '${AWS::StackName}-CalculatorConfigParameter'
+
+  UsageInstructions:
+    Description: 'How to use the deployed infrastructure'
+    Value: !Sub |
+      1. Login: aws ecr get-login-password --region ${AWS::Region} | docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+      2. Run: docker run --platform linux/amd64 -it --rm ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}:latest
+      3. JSON mode: docker run --platform linux/amd64 --rm ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${RepositoryName}:latest java -jar app.jar --json
