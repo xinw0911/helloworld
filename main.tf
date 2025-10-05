@@ -49,7 +49,7 @@ resource "aws_dynamodb_table" "test_2_table" {
   #checkov:skip=CKV2_AWS_16:demo only, autoscaling is not needed
   #checkov:skip=CKV_AWS_119:demo only, no encryption is needed
 
-  name           = "test3newtable"
+  name           = "test5newtable"
   billing_mode   = "PROVISIONED"
   read_capacity  = 3
   write_capacity = 4
