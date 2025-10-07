@@ -42,12 +42,6 @@ public class Calculator implements Runnable {
         System.out.println("Precision: " + precision + " decimal places");
         System.out.println("Precision: " + precision + " decimal places");
         System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");
-        System.out.println("Precision: " + precision + " decimal places");     
 
         while (true) {
             System.out.print("\nEnter first number (or 'exit' to quit): ");
