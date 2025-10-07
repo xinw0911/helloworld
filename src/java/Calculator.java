@@ -154,6 +154,7 @@ public class Calculator implements Runnable {
             }
             json.put("result", result);
             json.put("precision", precision);
+            System.out.println(objectMapper.writeValueAsString(json));
 
             System.out.println(objectMapper.writeValueAsString(json));
             System.out.println(objectMapper.writeValueAsString(json));
