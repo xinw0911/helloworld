@@ -6,9 +6,9 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_ACCOUNT_ID: "085494094526"
+  AWS_ACCOUNT_ID: "834197531540"
   AWS_REGION: us-west-2
-  ECR_REGISTRY: 085494094526.dkr.ecr.us-west-2.amazonaws.com
+  ECR_REGISTRY: 834197531540.dkr.ecr.us-west-2.amazonaws.com
   ECR_REPOSITORY: gh/repo
   CFN_STACK_NAME: enhanced-calculator-ecr-infrastructure
   ENVIRONMENT: production
@@ -31,7 +31,7 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/githubrole
+          role-to-assume: arn:aws:iam::${{ env.AWS_ACCOUNT_ID }}:role/testgithub
           aws-region: ${{ env.AWS_REGION }}
           mask-aws-account-id: true
 
